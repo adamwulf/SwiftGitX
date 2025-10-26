@@ -110,6 +110,10 @@ struct IndexCollection {
     ///
     /// The paths should be relative to the repository root directory.
     /// For example, `README.md` or `Sources/SwiftGitX/Repository.swift`.
+    ///
+    /// This method handles additions, modifications, and deletions of files.
+    /// If a file in the pathspec has been deleted from the working directory,
+    /// the deletion will be staged in the index.
     func add(paths: [String]) throws {
         // Read the index
         let indexPointer = try readIndexPointer()
@@ -121,10 +125,17 @@ struct IndexCollection {
             let flags = GIT_INDEX_ADD_DEFAULT.rawValue | GIT_INDEX_ADD_DISABLE_PATHSPEC_MATCH.rawValue
 
             // TODO: Implement options
-            // Add the files to the index
-            let status = git_index_add_all(indexPointer, &strArray, flags, nil, nil)
+            // First, add new files and modifications
+            let addStatus = git_index_add_all(indexPointer, &strArray, flags, nil, nil)
 
-            guard status == GIT_OK.rawValue else {
+            guard addStatus == GIT_OK.rawValue else {
+                throw IndexError.failedToAddFile(errorMessage)
+            }
+
+            // Then, handle deletions of tracked files
+            let updateStatus = git_index_update_all(indexPointer, &strArray, nil, nil)
+
+            guard updateStatus == GIT_OK.rawValue else {
                 throw IndexError.failedToAddFile(errorMessage)
             }
         }
@@ -137,6 +148,10 @@ struct IndexCollection {
     /// - Parameter files: The file URLs.
     ///
     /// The files should be URLs to files in the repository.
+    ///
+    /// This method handles additions, modifications, and deletions of files.
+    /// If a file in the list has been deleted from the working directory,
+    /// the deletion will be staged in the index.
     func add(files: [URL]) throws {
         // Get the relative paths of the files
         let paths = try files.map { try relativePath(for: $0) }

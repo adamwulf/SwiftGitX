@@ -464,6 +464,10 @@ public extension Repository {
     ///
     /// The paths should be relative to the repository root directory.
     /// For example, `README.md` or `Sources/SwiftGitX/Repository.swift`.
+    ///
+    /// This method handles additions, modifications, and deletions of files.
+    /// If a file in the pathspec has been deleted from the working directory,
+    /// the deletion will be staged in the index.
     func add(paths: [String]) throws {
         try index.add(paths: paths)
     }
@@ -471,6 +475,10 @@ public extension Repository {
     /// Adds files to the index.
     ///
     /// - Parameter files: The file URLs to add.
+    ///
+    /// This method handles additions, modifications, and deletions of files.
+    /// If a file in the list has been deleted from the working directory,
+    /// the deletion will be staged in the index.
     func add(files: [URL]) throws {
         try index.add(files: files)
     }
