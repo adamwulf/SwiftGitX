@@ -75,20 +75,12 @@ struct IndexCollection {
     ///
     /// The path should be relative to the repository root directory.
     /// For example, `README.md` or `Sources/SwiftGitX/Repository.swift`.
+    ///
+    /// This method handles additions, modifications, and deletions.
+    /// If the file has been deleted from the working directory, the deletion will be staged.
     func add(path: String) throws {
-        // Read the index
-        let indexPointer = try readIndexPointer()
-        defer { git_index_free(indexPointer) }
-
-        // Add the file to the index
-        let status = git_index_add_bypath(indexPointer, path)
-
-        guard status == GIT_OK.rawValue else {
-            throw IndexError.failedToAddFile(errorMessage)
-        }
-
-        // Write the index back to the repository
-        try writeIndex(indexPointer: indexPointer)
+        // Delegate to add(paths:) which handles additions, modifications, and deletions
+        try add(paths: [path])
     }
 
     /// Adds a file to the index.
@@ -96,6 +88,9 @@ struct IndexCollection {
     /// - Parameter file: The file URL.
     ///
     /// The file should be a URL to a file in the repository.
+    ///
+    /// This method handles additions, modifications, and deletions.
+    /// If the file has been deleted from the working directory, the deletion will be staged.
     func add(file: URL) throws {
         // Get the relative path of the file
         let relativePath = try relativePath(for: file)
